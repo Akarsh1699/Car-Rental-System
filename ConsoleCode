@@ -164,7 +164,7 @@ public class CabAgency {
         for(int i=0;i<ppassenger.size();i++)
         {
         //following function will return index of the required cab 
-        int index=calculate_nearest(ppassenger.get(0).p_location,cstatus);
+        int index=calculate_nearest(ppassenger.get(i).p_location,cstatus);
         
         //this index will be used too find the corresponding ID of the required driver
         int id=cstatus.get(index).d_ID;
@@ -173,7 +173,7 @@ public class CabAgency {
         double cost=calculate_cost(ppassenger.get(i).p_location,cstatus.get(index).location,ppassenger.get(i).drop_location);
         
         //storing passenger ID and his/her corresponding driver ID
-        Pair p=new Pair(ppassenger.get(0).p_ID,id);
+        Pair p=new Pair(ppassenger.get(i).p_ID,id);
         
         //updating the 'dist' HashMap which will store the money earned by every driver
         //key is the driver ID and value is the corresponding money he earns
