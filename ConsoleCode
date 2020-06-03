@@ -1,0 +1,209 @@
+package cabagency;
+
+import java.util.*;
+import java.io.*;
+import java.lang.*;
+
+class Pair{
+    int x;
+    int y;
+    
+    public Pair(int x,int y)
+    {
+        this.x=x;
+        this.y=y;
+    }
+    
+    public String toString()
+    {
+        return "(" + this.x + "," + this.y + ")";
+    }
+}
+
+
+//contains name & ID of the Cab Drivers
+class CabDriver{
+    int d_ID;
+    String name;
+    
+    public CabDriver(int d_ID,String name)
+    {
+        this.d_ID=d_ID;
+        this.name=name;
+    }
+    
+    public String toString()
+    {
+        return this.d_ID + " " + this.name;
+    }
+}
+
+//contains name,ID,initial location & drop location of passengers
+class Passenger{
+    String name;
+    int p_ID;
+    int x1,y1;
+    int x2,y2;
+    Pair p_location;
+    Pair drop_location;
+    
+    public Passenger(String name,int p_ID,int x1,int y1,int x2,int y2)
+    {
+        this.name=name;
+        this.p_ID=p_ID;
+        this.x1=x1;
+        this.y1=y1;
+        this.x2=x2;
+        this.y2=y2;
+        this.p_location=new Pair(x1,y1);
+        this.drop_location=new Pair(x2,y2);
+    }
+    
+    public String toString()
+    {
+        return this.name + " " + "(" + this.x1+ "," + this.y1 + ")" +" " +"(" + this.x2 + "," + this.y2 + ")";
+    }
+}
+
+//contains the driver's ID,status & his location
+class CurrentStatus{
+    int d_ID;
+    boolean status;
+    int x,y;
+    Pair location;
+    
+    public CurrentStatus(int d_ID,boolean status,int x,int y)
+    {
+        this.d_ID=d_ID;
+        this.status=status;
+        this.x=x;
+        this.y=y;
+        this.location=new Pair(x,y);
+    }
+    
+    public String toString(){
+        return this.d_ID + " " + this.status + " " + "(" + this.x + "," + this.y + ")";
+    }
+}
+
+public class CabAgency {
+    
+    //taking the current status linkedlist and iterating through it to find a cab within 5km radius
+    //which also has its status as false
+    //returning the index of one such available cab
+    
+    public static int calculate_nearest(Pair p_location,LinkedList<CurrentStatus> cstatus){
+        for(int i=0;i<cstatus.size();i++)
+        {
+            int id=cstatus.get(i).d_ID;
+            int x1=cstatus.get(i).x;
+            int y1=cstatus.get(i).y;
+            int x2=p_location.x;
+            int y2=p_location.y;
+            
+            double d=Math.pow((x2-x1),2) + Math.pow((y2-y1),2);
+            d=Math.sqrt(d);
+            
+            if(d<=5 && cstatus.get(i).status==false)
+            {
+                cstatus.get(i).status=true;
+                return i;
+            }
+            
+        }
+        System.out.println("No cab found");
+        return -1;
+    }
+    
+    //the total distance=(passenger location-driver location) + (drop location-passenger location)
+    //returning the cost
+    
+    public static double calculate_cost(Pair p_location,Pair d_location,Pair drop_location)
+    {
+        int x1=p_location.x;
+        int y1=p_location.y;
+        int x2=d_location.x;
+        int y2=d_location.y;
+        int x3=drop_location.x;
+        int y3=drop_location.y;
+        
+        double d1=Math.pow((x2-x1),2) + Math.pow((y2-y1),2);
+        d1=Math.sqrt(d1);
+        double d2=Math.pow((x3-x1),2) + Math.pow((y3-y1),2);
+        d2=Math.sqrt(d2);
+        
+        double d=d1+d2;
+        
+        return d*5;
+        
+    }
+
+    public static void main(String[] args) {
+        
+        
+        LinkedList<CabDriver> driver=new LinkedList<CabDriver>();
+        LinkedList<CurrentStatus> cstatus=new LinkedList<CurrentStatus>();
+        LinkedList<Passenger> ppassenger=new LinkedList<Passenger>();
+        HashMap<Pair,Integer> freq=new HashMap<Pair,Integer>();
+        HashMap<Integer,Double> dist=new HashMap<Integer,Double>();
+        
+        //adding drivers to the CabDriver Linkedlist and subsequently updating the Current status LinkedList
+        driver.add(new CabDriver(101,"Saket"));
+        cstatus.add(new CurrentStatus(101,false,2,5));
+        driver.add(new CabDriver(102,"Surbhi"));
+        cstatus.add(new CurrentStatus(102,false,1,3));
+        driver.add(new CabDriver(103,"Swati"));
+        cstatus.add(new CurrentStatus(103,false,2,8));
+        
+        //adding passengers
+        ppassenger.add(new Passenger("Ananya",201,1,5,6,7));
+        ppassenger.add(new Passenger("Priya",202,3,5,8,9));
+        ppassenger.add(new Passenger("Sid",203,1,2,4,5));
+        
+        //iterating through passenger linkedlist to find suitable cab
+        for(int i=0;i<ppassenger.size();i++)
+        {
+        //following function will return index of the required cab 
+        int index=calculate_nearest(ppassenger.get(0).p_location,cstatus);
+        
+        //this index will be used too find the corresponding ID of the required driver
+        int id=cstatus.get(index).d_ID;
+        
+        //calculating cost of one cab ride
+        double cost=calculate_cost(ppassenger.get(i).p_location,cstatus.get(index).location,ppassenger.get(i).drop_location);
+        
+        //storing passenger ID and his/her corresponding driver ID
+        Pair p=new Pair(ppassenger.get(0).p_ID,id);
+        
+        //updating the 'dist' HashMap which will store the money earned by every driver
+        //key is the driver ID and value is the corresponding money he earns
+        if(!dist.containsKey(id))
+        {
+            dist.put(id,cost);
+        }
+        else
+        {
+            dist.put(id,dist.get(id)+cost);
+        }
+        
+        //storing the Pair containing driver & passenger ID
+        //if same combination of Driver and passenger occurs,count would increase by 1
+        if(!freq.containsKey(p))
+        {
+            freq.put(p,1);
+        }
+        else
+        {
+            freq.put(p,freq.get(p)+1);
+        }
+        }
+        
+        //simply printing HashMaps so as to see the driver passenger pair & the cost earned by each driver
+        System.out.println(freq);
+        System.out.println(dist);
+        
+        //ideally we should iterate through both hashmaps and find the most frequent occuring driver passenger pair
+        //and the driver earning the most money
+    }
+    
+}
